@@ -34,6 +34,8 @@ esp-idf-sys = "0.36.1"
 embedded-hal = "1.0.0"
 anyhow = "1.0.98"
 cstr_core = "0.2.6"
+embedded-graphics-core = "0.4.0"
+fugit = "0.3.7"
 
 # --- Optional Embassy Integration ---
 # esp-idf-svc = { version = "0.51", features = ["critical-section", "embassy-time-driver", "embassy-sync"] }
@@ -54,3 +56,9 @@ cstr_core = "0.2.6"
 
 [build-dependencies]
 embuild = "0.33"
+slint-build = "1.10.0"
+
+[dependencies.slint]
+version = "1.10.0"
+default-features = false
+features = ["compat-1-2", "unsafe-single-threaded", "libm", "renderer-software"]
