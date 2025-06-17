@@ -36,6 +36,8 @@ anyhow = "1.0.98"
 cstr_core = "0.2.6"
 embedded-graphics-core = "0.4.0"
 fugit = "0.3.7"
+enumset = "1.1.6"
+embedded-dma = "0.2.0"
 
 # --- Optional Embassy Integration ---
 # esp-idf-svc = { version = "0.51", features = ["critical-section", "embassy-time-driver", "embassy-sync"] }
