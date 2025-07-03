@@ -5,6 +5,7 @@ authors = ["doum4n <pensonic1986@gmail.com>"]
 edition = "2021"
 resolver = "2"
 rust-version = "1.77"
+default-run = "ili9341-esp32-rs"
 
 [[bin]]
 name = "ili9341-esp32-rs"
