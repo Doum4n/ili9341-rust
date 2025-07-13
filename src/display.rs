@@ -79,24 +79,30 @@ where
         range: core::ops::Range<usize>,
         render_fn: impl FnOnce(&mut [Self::TargetPixel]),
     ) {
-        let rect = embedded_graphics_core::primitives::Rectangle::new(
-            EgPoint::new(range.start as _, line as _),
-            Size::new(range.len() as _, 1),
-        );
+        // render_fn(&mut self.buffer[range.clone()]);
+        // let rect = Rectangle::new(EgPoint::new(range.start as _, line as _), Size::new(range.len() as _, 1));
+        // self.display
+        //     .borrow_mut()
+        //     .fill_contiguous(
+        //         &rect,
+        //         self.buffer[range.clone()].iter().map(|p| {
+        //             embedded_graphics_core::pixelcolor::raw::RawU16::new(p.0).into()
+        //         }),
+        //     )
+        //     .map_err(drop)
+        //     .unwrap();
+
         render_fn(&mut self.buffer[range.clone()]);
-        // NOTE! this is not an efficient way to send pixel to the screen, but it is kept simple on this template.
-        // It would be much faster to use the DMA to send pixel in parallel.
-        // See the example in https://github.com/slint-ui/slint/blob/master/examples/mcu-board-support/pico_st7789.rs
-        self.display
-            .borrow_mut()
-            .fill_contiguous(
-                &rect,
-                self.buffer[range.clone()]
-                    .iter()
-                    .map(|p| embedded_graphics_core::pixelcolor::raw::RawU16::new(p.0).into()),
-            )
-            .map_err(drop)
-            .unwrap();
+        let partial_buffer = PartialBuffer{buffer: self.buffer, range: range.clone()};
+        let (buffer_ptr, buffer_len) = unsafe { partial_buffer.read_buffer() };
+        let pixel_data = unsafe { core::slice::from_raw_parts(buffer_ptr, buffer_len) };
+
+        let rect = Rectangle::new(EgPoint::new(range.start as _, line as _), Size::new(range.len() as _, 1));
+        set_display_window(&mut self.spi.borrow_mut(), &mut self.dc, &mut self.cs, &rect).unwrap();
+        self.cs.set_low().unwrap();
+        self.dc.set_high().unwrap();
+        self.spi.borrow_mut().write(pixel_data).unwrap();
+        self.cs.set_high().unwrap();
     }
 }
 
@@ -108,7 +114,7 @@ pub fn set_display_window<'d, T: std::borrow::Borrow<SpiDriver<'d>>>(
 ) -> Result<(), anyhow::Error> {
     cs.set_low()?;
     dc.set_low()?;
-    spi.write(&[0x2A])?;
+    spi.write(&[0x2A])?; // Column Address Set (2Ah)
     dc.set_high()?;
     let x_start = rect.top_left.x as u16;
     let x_end = (rect.top_left.x + rect.size.width as i32 - 1) as u16;
@@ -122,7 +128,7 @@ pub fn set_display_window<'d, T: std::borrow::Borrow<SpiDriver<'d>>>(
 
     cs.set_low()?;
     dc.set_low()?;
-    spi.write(&[0x2B])?;
+    spi.write(&[0x2B])?; // Page Address Set (2Bh) *row*
     dc.set_high()?;
     let y_start = rect.top_left.y as u16;
     let y_end = (rect.top_left.y + rect.size.height as i32 - 1) as u16;
@@ -137,7 +143,7 @@ pub fn set_display_window<'d, T: std::borrow::Borrow<SpiDriver<'d>>>(
     cs.set_low()?;
     dc.set_low()?;
     spi.write(&[0x2C])?;
-    cs.set_high()?;
+    cs.set_high()?; // Memory Write (2Ch)
     Ok(())
 }
 

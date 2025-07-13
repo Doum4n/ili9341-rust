@@ -49,13 +49,16 @@ where
     }
 }
 
-pub struct PartialBuffer<'a>(&'a mut [Rgb565Pixel], core::ops::Range<usize>);
+pub struct PartialBuffer<'a> {
+    pub buffer: &'a mut [Rgb565Pixel],
+    pub range: core::ops::Range<usize>,
+}
 
 unsafe impl<'a> embedded_dma::ReadBuffer for PartialBuffer<'a> {
     type Word = u8;
 
     unsafe fn read_buffer(&self) -> (*const Self::Word, usize) {
-        let act_slice = &self.0[self.1.clone()];
+        let act_slice = &self.buffer[self.range.clone()];
         (act_slice.as_ptr() as *const u8, act_slice.len() * core::mem::size_of::<Rgb565Pixel>())
     }
 }
@@ -64,7 +67,7 @@ unsafe impl<'a> embedded_dma::WriteBuffer for PartialBuffer<'a> {
     type Word = u8;
 
     unsafe fn write_buffer(&mut self) -> (*mut Self::Word, usize) {
-        let act_slice = &mut self.0[self.1.clone()];
+        let act_slice = &mut self.buffer[self.range.clone()];
         (act_slice.as_mut_ptr() as *mut u8, act_slice.len() * core::mem::size_of::<Rgb565Pixel>())
     }
 }

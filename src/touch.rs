@@ -23,10 +23,10 @@ impl<PinE, IRQ: InputPin<Error = PinE>, CS: OutputPin<Error = PinE>, SPI: SpiDev
     pub fn read(&mut self) -> Result<Option<(f32, f32)>, Error<PinE, SPI::Error>> {
         const PRESS_THRESHOLD: i32 = -25_000;
         const RELEASE_THRESHOLD: i32 = -30_000;
-        const MIN_X: u32 = 200;
-        const MAX_X: u32 = 1900;
-        const MIN_Y: u32 = 300;
-        const MAX_Y: u32 = 1900;
+        const MIN_X: u32 = 127;
+        const MAX_X: u32 = 2000;
+        const MIN_Y: u32 = 127;
+        const MAX_Y: u32 = 2000;
 
         let threshold = if self.pressed { RELEASE_THRESHOLD } else { PRESS_THRESHOLD };
         self.pressed = false;

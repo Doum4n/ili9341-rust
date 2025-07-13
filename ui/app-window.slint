@@ -11,6 +11,7 @@ export component AppWindow inherits Window {
         Text {
             text: "Counter: \{root.counter}";
         }
+
         Button {
             text: "Increase value";
             clicked => { 
@@ -18,12 +19,7 @@ export component AppWindow inherits Window {
             }
         }
 
-        ScrollView {
-            viewport-height: 600px;
-            width: parent.width;
-            height: parent.height - 100px; // Điều chỉnh để chiếm không gian còn lại
-            viewport-y: -root.scroll_offset * 1px; // Đồng bộ với offset cuộn
-            
+        ScrollView {          
             VerticalLayout {
                 spacing: 10px;
                 for i in 20 : Rectangle {

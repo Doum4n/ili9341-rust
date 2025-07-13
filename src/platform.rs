@@ -1,5 +1,6 @@
 use super::*;
 use embedded_graphics::draw_target::DrawTarget;
+use slint::{PhysicalPosition, PlatformError};
 
 pub struct Ili9341Platform<'a, D, Touch> {
     window: RefCell<Option<Rc<MinimalSoftwareWindow>>>,
@@ -52,28 +53,18 @@ where
                     .touch
                     .borrow_mut()
                     .read()
-                    .map_err(|_| slint::PlatformError::Other("Touch read error".into()))?
+                    .map_err(|_| PlatformError::Other("Touch read error".into()))?
                     .map(|point| {
-                        info!("Touch point: {:?}", point);
-                        let position = slint::PhysicalPosition::new((point.0 * 320.0) as _, (point.1 * 240.0) as _)
-                            .to_logical(self.window.borrow().as_ref().unwrap().scale_factor());
+                        info!("Normalized touch point: x={}, y={}", point.0, point.1);
 
-                        if let Some(last_y_pos) = last_y {
-                            let delta_y = point.1 - last_y_pos;
-                            if delta_y.abs() > 0.01 {
-                                let num_lines = (delta_y * 50.0) as i16;
-                                self.buffer_provider
-                                    .borrow_mut()
-                                    .scroll_vertically(-num_lines)
-                                    .map_err(|_| slint::PlatformError::Other("Scroll error".into()))
-                                    .unwrap();
-                                if let Some(ui) = ui_handle.upgrade() {
-                                    let current_offset = ui.get_scroll_offset();
-                                    ui.set_scroll_offset(current_offset + num_lines as f32);
-                                }
-                            }
-                        }
-                        last_y = Some(point.1);
+                        let (x, y) = (point.1, 1.0 - point.0); // Swap X and Y, invert X
+                        let phys_x = x * 320.0;
+                        let phys_y = y * 240.0;
+
+                        let scale_factor = self.window.borrow().as_ref().unwrap().scale_factor();
+                        let position = PhysicalPosition::new(phys_x as _, phys_y as _).to_logical(scale_factor);
+
+                        info!("Logical position: x={}, y={}", position.x, position.y);
 
                         match last_touch.replace(position) {
                             Some(_) => WindowEvent::PointerMoved { position },
